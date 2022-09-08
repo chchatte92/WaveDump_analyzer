@@ -1,0 +1,37 @@
+ASCII:
+// Write the Channel Header
+fprintf(WDrun->fout[(gr*9+ch)], "Record Length: %d\n", Size);
+fprintf(WDrun->fout[(gr*9+ch)], "BoardID: %2d\n", EventInfo->BoardId);
+if (flag)
+    fprintf(WDrun->fout[(gr*9+ch)], "Channel: %s\n",  trname);
+else
+    fprintf(WDrun->fout[(gr*9+ch)], "Channel: %d\n",  (gr*8)+ ch);
+fprintf(WDrun->fout[(gr*9+ch)], "Event Number: %d\n", EventInfo->EventCounter);
+fprintf(WDrun->fout[(gr*9+ch)], "Pattern: 0x%04X\n", EventInfo->Pattern & 0xFFFF);
+fprintf(WDrun->fout[(gr*9+ch)], "Trigger Time Stamp: %u\n", Event->DataGroup[gr].TriggerTimeTag);
+fprintf(WDrun->fout[(gr*9+ch)], "DC offset (DAC): 0x%04X\n", WDcfg->DCoffset[ch] & 0xFFFF);
+fprintf(WDrun->fout[(gr*9+ch)], "Start Index Cell: %d\n", Event->DataGroup[gr].StartIndexCell);
+
+
+BINARY:
+		
+uint32_t BinHeader[6];
+BinHeader[0] = (WDcfg->Nbit == 8) ? Size + 6*sizeof(*BinHeader) : Size*4 + 6*sizeof(*BinHeader);
+BinHeader[1] = EventInfo->BoardId;
+BinHeader[2] = EventInfo->Pattern;
+BinHeader[3] = ch;
+BinHeader[4] = EventInfo->EventCounter;
+BinHeader[5] = EventInfo->TriggerTimeTag;
+
+corrected BINARY:
+		
+uint32_t BinHeader[6];
+BinHeader[0] = Size;
+BinHeader[1] = (EventInfo->BoardId& 0xF)<<28 + (Event->DataGroup[gr].StartIndexCell & 0x3FF); // BoardId=4-bits, StartIndexCell=10-bits - combine
+BinHeader[2] = (EventInfo->Pattern & 0xFFFF);
+if (ch == 8)
+BinHeader[3] = 32 + ch;
+else
+BinHeader[3] = (gr*8) + ch;
+BinHeader[4] = EventInfo->EventCounter;
+BinHeader[5] = Event->DataGroup[gr].TriggerTimeTag;
